@@ -1,0 +1,32 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/eslint-recommended",
+      "plugin:@typescript-eslint/recommended",
+      "airbnb-base",
+      "airbnb-typescript/base"
+    ],
+    "parserOptions": {
+      "project": "./tsconfig.json"
+    },
+    "rules": {
+      "import/no-cycle": 0,
+      "linebreak-style": 0,
+      "no-return-assign": 0,
+      "@typescript-eslint/indent": 1,
+      "object-curly-newline": 0,
+      "no-console": 2,
+      "@typescript-eslint/lines-between-class-members": 0,
+      "import/prefer-default-export": 0,
+      "max-len": [1, { "code": 140 }],
+      "@typescript-eslint/no-explicit-any": 2,
+      "import/no-extraneous-dependencies": 0,
+      "@typescript-eslint/no-unused-vars": 0,
+      "no-underscore-dangle": 0,
+      "@typescript-eslint/no-non-null-assertion": 0
+    }
+  }
+  

@@ -1,0 +1,531 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_tldOwner",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_tldNode",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_maxRecords",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "name": "AddSubdomainNode",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "ExtendExpiry",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "string[]",
+                "name": "",
+                "type": "string[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "string[]",
+                "name": "",
+                "type": "string[]"
+            }
+        ],
+        "name": "SetSLDInfo",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "UpdateSLD",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_sldHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_serial",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_numYears",
+                "type": "uint256"
+            }
+        ],
+        "name": "addRecord",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_sldHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_subdomainHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "string",
+                "name": "_name",
+                "type": "string"
+            },
+            {
+                "internalType": "address",
+                "name": "_owner",
+                "type": "address"
+            }
+        ],
+        "name": "addSubdomain",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_sldHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_numYears",
+                "type": "uint256"
+            }
+        ],
+        "name": "extendExpiry",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_sldHash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getExpiry",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getMaxRecords",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getNumRecords",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_sldHash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getSLDInfo",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "serial",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "expiry",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "subdomainNode",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "index",
+                        "type": "uint256"
+                    },
+                    {
+                        "components": [
+                            {
+                                "internalType": "string",
+                                "name": "eth",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "btc",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "sol",
+                                "type": "string"
+                            }
+                        ],
+                        "internalType": "struct Addresses",
+                        "name": "addresses",
+                        "type": "tuple"
+                    },
+                    {
+                        "components": [
+                            {
+                                "internalType": "string",
+                                "name": "avatar",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "twitter",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "email",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "url",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "description",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "keywords",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "discord",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "github",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "reddit",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "telegram",
+                                "type": "string"
+                            },
+                            {
+                                "internalType": "string",
+                                "name": "extras",
+                                "type": "string"
+                            }
+                        ],
+                        "internalType": "struct TextRecord",
+                        "name": "textRecord",
+                        "type": "tuple"
+                    }
+                ],
+                "internalType": "struct SLDStorage.SLDInfo",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_sldHash",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getSerial",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getSerials",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getSldHashes",
+        "outputs": [
+            {
+                "internalType": "bytes32[]",
+                "name": "",
+                "type": "bytes32[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "isTLDPaused",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_newMax",
+                "type": "uint256"
+            }
+        ],
+        "name": "setMaxRecords",
+        "outputs": [
+            {
+                "internalType": "int32",
+                "name": "",
+                "type": "int32"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_sldHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "string[]",
+                "name": "_addresses",
+                "type": "string[]"
+            },
+            {
+                "internalType": "string[]",
+                "name": "_textRecord",
+                "type": "string[]"
+            }
+        ],
+        "name": "setSLDInfo",
+        "outputs": [
+            {
+                "internalType": "int32",
+                "name": "",
+                "type": "int32"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_sldHash",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_newSerial",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_numYears",
+                "type": "uint256"
+            }
+        ],
+        "name": "updateSLD",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]
