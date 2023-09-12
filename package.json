@@ -1,5 +1,5 @@
 {
-  "name": "hns-resolution-sdk",
+  "name": "@hedera-name-service/hns-resolution-sdk",
   "version": "3.1.7",
   "description": "",
   "main": "dist/index.js",
@@ -21,7 +21,7 @@
   },
   "homepage": " https://github.com/hedera-name-service/hns-resolution-sdk#readme",
   "publishConfig": {
-    "@hedera-name-service:registry": "https://npm.pkg.github.com"
+    "@hedera-name-service:registry": "https://registry.npmjs.org"
   },
   "devDependencies": {
     "@types/jest": "^29.2.5",
