@@ -1,21 +1,99 @@
 # HNS resolution SDK
 
-In **Hashgraph Name Service**'s effort to create a web3 username public good, we'd like to also deliver a public SDK available for use by any entity that wants to resolve hashgraph names to empower their own solutions.
+The HNS namespace currently includes `.hbar`, `.boo`, and `.cream` TLDs, which are native to HNS. Since the namespace will expand over time, a hardcoded list of TLDs for recognizing HNS names will regularly be out-of-date. The HNS Resolution SDK ensures a correct resolution of account holders and their domains.
+
+## Name Resolution
+
+Domains can have many types of data associated with them; the most common is cryptocurrency addresses, or Hedera Account IDs in the context of HNS.
+
+### Installation
+
+Install the SDK. There are no additional peer dependencies required at this time.
+
+```
+npm install @hedera-name-service/hns-resolution-sdk
+```
+
+### Initialization
+
+Initialize the resolver by defining the API service you will use with the SDK. The SDK currently supports the following services:
+
+- `hedera_main`: [Hedera Mainnet Public Mirror Node](https://docs.hedera.com/hedera/core-concepts/mirror-nodes/hedera-mirror-node#mainnet)
+- `hedera_test`: [Hedera Testnet Public Mirror Node](https://docs.hedera.com/hedera/core-concepts/mirror-nodes/hedera-mirror-node#testnet)
+
+Example to initialize resolver with `hedera_main`:
+
+```javascript
+import { Resolver } from 'hns-resolution-sdk';
+
+const resolver = new Resolver('hedera_main');
+```
 
 
-Implementation (no key argument needs to be supplied for hedera_test and hedera_main values) :
+- `arkhia_main`: Hedera Mainnet Arkhia API Service
+- `arkhia_test`: Hedera Testnet Arkhia API Service
 
-    import { Resolver } from 'hns-resolution-sdk'
+Example to initialize resolver with `arkhia_main`:
 
-    const resolver =  new Resolver('arkhia_main', 'arkhia_header', 'arkhia_key'); **OR**  const resolver = new Resolver('hedera_main')
-    resolver.init();
+```javascript
+import { Resolver } from 'hns-resolution-sdk';
 
-Name Resolution Example:
+const resolver = new Resolver('arkhia_main', 'x-api-key', `${process.env.apiKey}`);
+```
 
-    const accountId =  await resolver.resolveSLD('palacios.hbar');
-    return => "0.0.xxxxxxx"
-Currently Supported Service Types: The values
+> **Note:** The example above demonstrates how to initialize the resolver with [Arkhia](https://arkhia.io). This is only for demonstration purposes and should not be implemented on any client side code. Always keep your API keys hidden!
 
-    hedera_test, hedera_main, arkhia_test, arkhia_main
+### Resolving Domains from Account IDs
 
-are currently supported by this SDK.
+HNS supports reverse resolution to all applications to display HNS names in place of Hedera Account IDs or other data associated with the HNS name(s).
+
+> HNS does not enforce the accuracy of reverse records - for instance, anyone may claim that the name for their address is `hns.hbar`. To be certain that the claim is correct, you must always perform the reverse resolution and render the returned value(s).
+
+#### `Resolver.getAllDomainsForAccount`
+
+#### Method:
+
+`getAllDomainsForAccount(accountId: string): Promise<string[]>`
+
+#### Parameter: 
+
+`accountId: string`: A Hedera Account ID in the format of `0.0.<Account>`. Read the docs on [Hedera Account IDs](https://docs.hedera.com/hedera/core-concepts/accounts/account-properties#account-id) for more info.
+
+#### Return:
+
+`Promise<string[]>`: An array of domains that the the specified `accountId` owns or maps to. The method will return an empty array the `accountId` does not own or resolve to any domains.
+
+#### Example:
+
+```javascript
+// Initialize the resolver
+const res = await resolver.getAllDomainsForAccount(`0.0.800`)
+// []
+```
+
+### Resolving domain names
+
+Domains can have many types of data associated with them; the most common is cryptocurrency addresses, or in the context of Hedera, account IDs. HNS supports storing and resolving the account IDs from a given domain name, if associated.
+
+#### `Resolver.resolveSLD`
+
+#### Method:
+
+`resolveSLD(domain: string): Promise<string | undefined>`
+
+#### Parameter: 
+
+`domain: string`: Any valid string that could represent a domain name.
+
+#### Return:
+
+`Promise<string | undefined>`: If the specified domain name resolves to an account ID, the account ID will be returned. If it does not resolve to an account ID, `undefined` is returned.
+
+#### Example:
+
+```javascript
+// Initialize the resolver
+const res = await resolver.resolveSLD(`hns.hbar`)
+// 0.0.838546
+```
+
