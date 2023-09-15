@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import unstoppableDomainsResolution from '@unstoppabledomains/resolution';
 import { ContractInfoQuery } from '@hashgraph/sdk/lib/exports';
+import { fromString } from '@hashgraph/sdk/lib/EntityIdHelper';
 import { hashDomain } from './hashDomain';
 import { MemoryCache } from './MemoryCache';
 import { MirrorNode, NetworkType } from './mirrorNode';
@@ -9,6 +10,7 @@ import { ICache, NameHash, ResolverOptions, SecondLevelDomain, TopLevelDomain } 
 import { HashgraphNames } from './archived';
 import { client } from './helpers/hashgraphSdkClient';
 import { getSldSmartContract, getTldSmartContract } from './smartContracts/getSmartContractService';
+import { formatHederaTxId, isNameHash } from './util/util';
 
 export const TEST_TLD_TOPIC_ID = '0.0.48097305';
 export const MAIN_TLD_TOPIC_ID = '0.0.1234189';
@@ -88,9 +90,9 @@ export class Resolver {
     const contractEVM = await this.getEvmContractAddress(domainTopicMessage.contractId);
     const tldContractService = await getTldSmartContract(contractEVM);
     const contractList = await tldContractService.getNodes();
-    const accountId = this.getAccountId(contractList, nameHash, domainTopicMessage.tokenId);
+    const { foundData, nftInfo } = await this.getAccountInfo(contractList, nameHash, domainTopicMessage.tokenId);
 
-    return Promise.resolve(accountId);
+    return Promise.resolve(foundData && new Date() < foundData.date ? nftInfo.account_id : '');
     // const sld = await this.getSecondLevelDomain(nameHash);
     // if (sld) {
     //   const [tokenId, serial] = sld.nftId.split(':');
@@ -110,7 +112,7 @@ export class Resolver {
     //     return [];
     //   }
     // }
-    if (!accountId.startsWith('0.0.'))  return [];
+    if (!accountId.startsWith('0.0.')) return [];
     const topicMessages = await this.mirrorNode.getTldTopicMessage();
     const userNftLists = await this.mirrorNode.getAllUserHNSNfts(topicMessages, accountId);
     const nftDataTopicMessages = await this.mirrorNode.getNftTopicMessages(topicMessages, userNftLists);
@@ -134,6 +136,35 @@ export class Resolver {
     //   .flat()
     //   .map((o) => this.cache.getSldByNftId(`${o.token_id}:${o.serial_number}`)));
     // return (slds.filter((sld) => sld !== undefined) as SecondLevelDomain[]).map((sld) => sld.nameHash.domain);
+  }
+
+  public async getDomainInfo(domainOrNameHashOrTxId: string | NameHash) {
+    let nameHash: NameHash;
+    if (typeof domainOrNameHashOrTxId === 'string' && domainOrNameHashOrTxId.match(/[0-9].[0-9].[0-9]{1,7}@[0-9]{1,10}.[0-9]{1,9}/)) {
+      const parseTxId = formatHederaTxId(domainOrNameHashOrTxId);
+      const domainName = await this.mirrorNode.getTxInfo(parseTxId);
+      nameHash = HashgraphNames.generateNameHash(domainName.newDomain || domainName.extendedDomain || domainName.expiredDomain);
+    } else if (typeof domainOrNameHashOrTxId === 'string' && domainOrNameHashOrTxId.match(/\.[hbar]|\.[boo]|\.[cream]/)) {
+      nameHash = HashgraphNames.generateNameHash(domainOrNameHashOrTxId);
+    } else if (typeof domainOrNameHashOrTxId === 'object' && isNameHash(domainOrNameHashOrTxId)) {
+      nameHash = domainOrNameHashOrTxId;
+    } else {
+      throw new Error('Invalid Input');
+    }
+
+    const domainTopicMessage = await this.getSldTopicMessage(nameHash);
+    const contractEVM = await this.getEvmContractAddress(domainTopicMessage.contractId);
+    const tldContractService = await getTldSmartContract(contractEVM);
+    const contractList = await tldContractService.getNodes();
+    const { foundData, nftInfo } = await this.getAccountInfo(contractList, nameHash, domainTopicMessage.tokenId);
+
+    const nftDataTopicMessage = await this.mirrorNode.getNftInfoTopicMessage(domainTopicMessage.topicId, nftInfo);
+    if (nftDataTopicMessage.length === 0) throw new Error('Unable to Find MetaData');
+    const final = JSON.parse(Buffer.from(nftDataTopicMessage[0].message, 'base64').toString());
+
+    final.accountId = (!foundData || new Date() < foundData.date) ? nftInfo.account_id : '';
+    final.expiration = (!foundData || new Date() < foundData.date) ? foundData?.date.getTime() : null;
+    return final;
   }
 
   // Private
@@ -283,7 +314,7 @@ export class Resolver {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async getAccountId(contractList:string[], nameHash: NameHash, tokenId: string) {
+  private async getAccountInfo(contractList:string[], nameHash: NameHash, tokenId: string) {
     let foundData;
     for (let index = 0; index < contractList.length; index += 1) {
       const SLDcontracts = getSldSmartContract(contractList[index]);
@@ -297,11 +328,8 @@ export class Resolver {
       }
     }
 
-    if (foundData && new Date() < foundData.date) {
-      const info = await this.mirrorNode.getNFT(tokenId, `${foundData?.serial}`);
-      return info.account_id;
-    }
+    const nftInfo = await this.mirrorNode.getNFT(tokenId, `${foundData?.serial}`);
 
-    return '';
+    return { foundData, nftInfo };
   }
 }

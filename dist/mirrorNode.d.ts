@@ -18,8 +18,10 @@ export declare class MirrorNode {
     getNFT(tokenId: string, serial: string): Promise<NFT>;
     getNFTsByAccountId(tokenId: string, accountId: string): Promise<NFT[]>;
     getTopicMessage(nameHash: NameHash): Promise<any>;
+    getTxInfo(txId: string): Promise<any>;
     getContractEvmAddress(contractId: string): Promise<any>;
     getNftTopicMessages(topicMessages: string | any[], userNftLists: any[]): Promise<any[]>;
+    getNftInfoTopicMessage(topicMessages: string, nftInfo: any): Promise<any>;
     getAllUserHNSNfts(topicMessages: string | any[], accountId: string): Promise<any[]>;
     getTldTopicMessage(): Promise<any>;
     private getBaseUrl;

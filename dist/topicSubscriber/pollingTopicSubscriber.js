@@ -26,10 +26,10 @@ exports.executeWithRetriesAsync = executeWithRetriesAsync;
 const sendGetRequest = async (url, authKey, authHeader = '', networkType) => (0, exports.executeWithRetriesAsync)(async (retryNum) => {
     // Backoff retry for each failed attempt
     await new Promise((resolve) => setTimeout(resolve, retryNum * 250));
-    const headers = {};
-    if (authKey) {
-        headers.Authorization = authKey;
-    }
+    //   const headers: any = {};
+    //   if (authKey) {
+    //     headers.Authorization = authKey;
+    //   }
     const res = networkType === 'arkhia_main' ? await axios_1.default.get(url, {
         headers: { [authHeader]: authKey },
     }) : await axios_1.default.get(url);
@@ -42,9 +42,9 @@ class PollingTopicSubscriber {
         let calledOnCaughtUp = false;
         let cancelled = false;
         const promise = new Promise(async (resolve) => {
-            //   const latestMessageUrl = `${getBaseUrl(networkType)}/api/v1/topics/${topicId}/messages`;
-            const latestMessageUrl = `${(0, mirrorNode_1.getBaseUrl)(networkType)}/api/v1/topics/${topicId}/messages?limit=1&order=desc`;
-            const latestMessageResponse = await sendGetRequest(latestMessageUrl, authKey, authHeader);
+            const latestMessageUrl = `${(0, mirrorNode_1.getBaseUrl)(networkType)}/api/v1/topics/${topicId}/messages`;
+            //   const latestMessageUrl = `${getBaseUrl(networkType)}/api/v1/topics/${topicId}/messages?limit=1&order=desc`;
+            const latestMessageResponse = await sendGetRequest(latestMessageUrl, authKey, authHeader, networkType);
             let latestSequenceNumber = 0;
             if (latestMessageResponse.messages.length) {
                 latestSequenceNumber = latestMessageResponse.messages[0].sequence_number;
@@ -52,7 +52,7 @@ class PollingTopicSubscriber {
             while (!cancelled) {
                 // const url = `${getBaseUrl(networkType)}/api/v1/topics/${topicId}/messages`;
                 const url = `${(0, mirrorNode_1.getBaseUrl)(networkType)}/api/v1/topics/${topicId}/messages?limit=${mirrorNode_1.MAX_PAGE_SIZE}&timestamp=gt:${lastTimestamp}`;
-                const response = await sendGetRequest(url, authKey, authHeader).catch((err) => {
+                const response = await sendGetRequest(url, authKey, authHeader, networkType).catch((err) => {
                     console.error({
                         err,
                         message: err.message,

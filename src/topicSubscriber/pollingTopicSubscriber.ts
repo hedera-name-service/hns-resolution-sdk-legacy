@@ -25,10 +25,10 @@ const sendGetRequest = async (url: string, authKey?: string, authHeader = '', ne
   // Backoff retry for each failed attempt
   await new Promise((resolve) => setTimeout(resolve, retryNum * 250));
 
-  const headers: any = {};
-  if (authKey) {
-    headers.Authorization = authKey;
-  }
+  //   const headers: any = {};
+  //   if (authKey) {
+  //     headers.Authorization = authKey;
+  //   }
 
   const res = networkType === 'arkhia_main' ? await axios.get(url, {
     headers: { [authHeader]: authKey },
@@ -54,9 +54,9 @@ export class PollingTopicSubscriber {
     let calledOnCaughtUp = false;
     let cancelled = false;
     const promise = new Promise<void>(async (resolve) => {
-    //   const latestMessageUrl = `${getBaseUrl(networkType)}/api/v1/topics/${topicId}/messages`;
-      const latestMessageUrl = `${getBaseUrl(networkType)}/api/v1/topics/${topicId}/messages?limit=1&order=desc`;
-      const latestMessageResponse = await sendGetRequest(latestMessageUrl, authKey, authHeader);
+      const latestMessageUrl = `${getBaseUrl(networkType)}/api/v1/topics/${topicId}/messages`;
+      //   const latestMessageUrl = `${getBaseUrl(networkType)}/api/v1/topics/${topicId}/messages?limit=1&order=desc`;
+      const latestMessageResponse = await sendGetRequest(latestMessageUrl, authKey, authHeader, networkType);
       let latestSequenceNumber = 0;
       if (latestMessageResponse.messages.length) {
         latestSequenceNumber = latestMessageResponse.messages[0].sequence_number;
@@ -65,7 +65,7 @@ export class PollingTopicSubscriber {
       while (!cancelled) {
         // const url = `${getBaseUrl(networkType)}/api/v1/topics/${topicId}/messages`;
         const url = `${getBaseUrl(networkType)}/api/v1/topics/${topicId}/messages?limit=${MAX_PAGE_SIZE}&timestamp=gt:${lastTimestamp}`;
-        const response = await sendGetRequest(url, authKey, authHeader).catch((err) => {
+        const response = await sendGetRequest(url, authKey, authHeader, networkType).catch((err) => {
           console.error({
             err,
             message: err.message,

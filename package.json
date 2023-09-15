@@ -1,6 +1,6 @@
 {
   "name": "@hedera-name-service/hns-resolution-sdk",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -40,6 +40,7 @@
     "@hashgraph/sdk": "^2.19.1",
     "@unstoppabledomains/resolution": "^8.3.3",
     "axios": "^1.2.2",
+    "idna-uts46-hx": "^5.0.7",
     "keccak256": "^1.0.6",
     "web3": "^1.8.1"
   }

@@ -91,6 +91,13 @@ export class MirrorNode {
     return found;
   }
 
+  async getTxInfo(txId:string) {
+    const urlTopicManger = `${this.getBaseUrl()}/api/v1/transactions/${txId}`;
+    const res = await this.sendGetRequest(urlTopicManger);
+    const domainName = JSON.parse(Buffer.from(res.data.transactions[0].memo_base64, 'base64').toString());
+    return domainName;
+  }
+
   async getContractEvmAddress(contractId:string) {
     const url = `${this.getBaseUrl()}/api/v1/contracts/${contractId}`;
     const res = await this.sendGetRequest(url);
@@ -123,6 +130,31 @@ export class MirrorNode {
       if (nftDataMessages.length === userNftLists.length) break;
     }
     return nftDataMessages;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getNftInfoTopicMessage(topicMessages: string, nftInfo: any) {
+    let nftDataMessage;
+
+    const urlTopicManger = `${this.getBaseUrl()}/api/v1/topics/${topicMessages}/messages`;
+    // eslint-disable-next-line no-await-in-loop
+    const mainTopicMessages = await this.sendGetRequest(urlTopicManger);
+    const filteredData = mainTopicMessages.data.messages.filter((x) => {
+      const currMsgInfo = JSON.parse(Buffer.from(x.message, 'base64').toString());
+      return currMsgInfo.nftId === `${nftInfo.token_id}:${nftInfo.serial_number}`;
+    });
+    nftDataMessage = filteredData;
+    if (mainTopicMessages.data.links.next) {
+      // eslint-disable-next-line no-await-in-loop
+      const nextCall = await this.nextApiCallTopics(mainTopicMessages.data.links.next);
+
+      const nextData = nextCall.filter((x) => {
+        const currMsgInfo = JSON.parse(Buffer.from(x.message, 'base64').toString());
+        return currMsgInfo.nftId === `${nftInfo.token_id}:${nftInfo.serial_number}`;
+      });
+      nftDataMessage = nextData;
+    }
+
+    return nftDataMessage;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

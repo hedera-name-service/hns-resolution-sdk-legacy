@@ -24,6 +24,7 @@ export declare class Resolver {
      */
     resolveSLD(domain: string): Promise<string | undefined>;
     getAllDomainsForAccount(accountId: string): Promise<string[]>;
+    getDomainInfo(domainOrNameHashOrTxId: string | NameHash): Promise<any>;
     private getTldTopicId;
     /**
      * @description Retrieves and stores top level domains
@@ -47,5 +48,5 @@ export declare class Resolver {
     getSecondLevelDomain(nameHash: NameHash): Promise<SecondLevelDomain | undefined>;
     private getSldTopicMessage;
     private getEvmContractAddress;
-    private getAccountId;
+    private getAccountInfo;
 }
