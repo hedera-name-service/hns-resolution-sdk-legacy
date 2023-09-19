@@ -238,6 +238,9 @@ class Resolver {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async getAccountInfo(contractList, nameHash, tokenId) {
         let foundData;
+        console.log(contractList);
+        if (contractList.length === 0)
+            throw Error('Evm Contract Issues');
         for (let index = 0; index < contractList.length; index += 1) {
             const SLDcontracts = (0, getSmartContractService_1.getSldSmartContract)(contractList[index]);
             const serial = await SLDcontracts.getSerial(`0x${Buffer.from(nameHash.sldHash).toString('hex')}`);
@@ -249,6 +252,9 @@ class Resolver {
                 break;
             }
         }
+        console.log(foundData);
+        if (!foundData)
+            throw Error('No Serial');
         const nftInfo = await this.mirrorNode.getNFT(tokenId, `${foundData === null || foundData === void 0 ? void 0 : foundData.serial}`);
         return { foundData, nftInfo };
     }
