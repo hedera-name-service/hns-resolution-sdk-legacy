@@ -319,6 +319,7 @@ export class Resolver {
     for (let index = 0; index < contractList.length; index += 1) {
       const SLDcontracts = getSldSmartContract(contractList[index]);
       const serial = await SLDcontracts.getSerial(`0x${Buffer.from(nameHash.sldHash).toString('hex')}`);
+      console.log(serial);
       const dateExp = await SLDcontracts.getExpiry(`0x${Buffer.from(nameHash.sldHash).toString('hex')}`);
       if (dateExp !== 0) {
         const d = new Date(0);
