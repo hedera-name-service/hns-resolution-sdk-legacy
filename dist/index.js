@@ -16,7 +16,7 @@ const util_1 = require("./util/util");
 exports.TEST_TLD_TOPIC_ID = '0.0.48097305';
 exports.MAIN_TLD_TOPIC_ID = '0.0.1234189';
 class Resolver {
-    constructor(networkType, authHeader = '', authKey = '', cache, resolverOptions) {
+    constructor(networkType, authHeader = '', authKey = '', jsonRPC = '', cache, resolverOptions) {
         this._isCaughtUpWithTopic = new Map();
         this._subscriptions = [];
         this.isCaughtUpPromise = Promise.resolve();
@@ -27,6 +27,7 @@ class Resolver {
         else {
             this.cache = cache;
         }
+        this.jsonRPC = ((authHeader && authKey && jsonRPC) || jsonRPC) ? jsonRPC : 'https://mainnet.hashio.io/api';
         if (resolverOptions) {
             this._options = resolverOptions;
         }
@@ -63,8 +64,10 @@ class Resolver {
         const nameHash = (0, hashDomain_1.hashDomain)(domain);
         const domainTopicMessage = await this.getSldTopicMessage(nameHash);
         const contractEVM = await this.getEvmContractAddress(domainTopicMessage.contractId);
-        const tldContractService = await (0, getSmartContractService_1.getTldSmartContract)(contractEVM);
+        const tldContractService = await (0, getSmartContractService_1.getTldSmartContract)(contractEVM, this.jsonRPC);
         const contractList = await tldContractService.getNodes();
+        if (contractList.length === 0)
+            throw Error('No Contract Address');
         const { foundData, nftInfo } = await this.getAccountInfo(contractList, nameHash, domainTopicMessage.tokenId);
         return Promise.resolve(foundData && new Date() < foundData.date ? nftInfo.account_id : '');
         // const sld = await this.getSecondLevelDomain(nameHash);
@@ -127,8 +130,10 @@ class Resolver {
         }
         const domainTopicMessage = await this.getSldTopicMessage(nameHash);
         const contractEVM = await this.getEvmContractAddress(domainTopicMessage.contractId);
-        const tldContractService = await (0, getSmartContractService_1.getTldSmartContract)(contractEVM);
+        const tldContractService = await (0, getSmartContractService_1.getTldSmartContract)(contractEVM, this.jsonRPC);
         const contractList = await tldContractService.getNodes();
+        if (contractList.length === 0)
+            throw Error('No Contract Address');
         const { foundData, nftInfo } = await this.getAccountInfo(contractList, nameHash, domainTopicMessage.tokenId);
         const nftDataTopicMessage = await this.mirrorNode.getNftInfoTopicMessage(domainTopicMessage.topicId, nftInfo);
         if (nftDataTopicMessage.length === 0)
@@ -242,7 +247,7 @@ class Resolver {
         if (contractList.length === 0)
             throw Error('Evm Contract Issues');
         for (let index = 0; index < contractList.length; index += 1) {
-            const SLDcontracts = (0, getSmartContractService_1.getSldSmartContract)(contractList[index]);
+            const SLDcontracts = (0, getSmartContractService_1.getSldSmartContract)(contractList[index], this.jsonRPC);
             const serial = await SLDcontracts.getSerial(`0x${Buffer.from(nameHash.sldHash).toString('hex')}`);
             const dateExp = await SLDcontracts.getExpiry(`0x${Buffer.from(nameHash.sldHash).toString('hex')}`);
             if (dateExp !== 0) {

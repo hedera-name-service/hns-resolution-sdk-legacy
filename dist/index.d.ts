@@ -10,8 +10,9 @@ export declare class Resolver {
     private _subscriptions;
     private cache;
     private _unstoppableDomainsResolver;
+    private jsonRPC;
     isCaughtUpPromise: Promise<unknown>;
-    constructor(networkType: NetworkType, authHeader?: string, authKey?: string, cache?: ICache, resolverOptions?: ResolverOptions);
+    constructor(networkType: NetworkType, authHeader?: string, authKey?: string, jsonRPC?: string, cache?: ICache, resolverOptions?: ResolverOptions);
     /**
      * @description Initializes all topic subscriptions.
      */

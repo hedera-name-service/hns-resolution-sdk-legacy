@@ -16,7 +16,7 @@ npm install @hedera-name-service/hns-resolution-sdk
 
 ### Initialization
 
-Initialize the resolver by defining the API service you will use with the SDK. The SDK currently supports the following services:
+Initialize the resolver by defining the API service you will use with the SDK and JSON-RPC Provider. The SDK currently supports the following services:
 
 - `hedera_main`: [Hedera Mainnet Public Mirror Node](https://docs.hedera.com/hedera/core-concepts/mirror-nodes/hedera-mirror-node#mainnet)
 - `hedera_test`: [Hedera Testnet Public Mirror Node](https://docs.hedera.com/hedera/core-concepts/mirror-nodes/hedera-mirror-node#testnet)
@@ -25,11 +25,10 @@ Example to initialize resolver with `hedera_main`:
 
 ```javascript
 import { Resolver } from 'hns-resolution-sdk';
-
+// Which will use the default JSON-RPC Provider, Hashio.io
 const resolver = new Resolver('hedera_main');
+
 ```
-
-
 - `arkhia_main`: Hedera Mainnet Arkhia API Service
 - `arkhia_test`: Hedera Testnet Arkhia API Service
 
@@ -37,11 +36,22 @@ Example to initialize resolver with `arkhia_main`:
 
 ```javascript
 import { Resolver } from 'hns-resolution-sdk';
-
+// Which will use the default JSON-RPC Provider, Hashio.io
 const resolver = new Resolver('arkhia_main', 'x-api-key', `${process.env.apiKey}`);
 ```
 
+Example to use Arkhia JSON-RPC with `arkhia_main`: 
+```javascript
+import { Resolver } from 'hns-resolution-sdk';
+
+const resolver = new Resolver('arkhia_main', 'x-api-key', `${process.env.apiKey}`, `arkhiaJrpcUrl`);
+```
+
+
 > **Note:** The example above demonstrates how to initialize the resolver with [Arkhia](https://arkhia.io). This is only for demonstration purposes and should not be implemented on any client side code. Always keep your API keys hidden!
+
+**Note:** There is an env.example with setup example for easy set up for developers 
+
 
 ### Resolving Domains from Account IDs
 
@@ -97,3 +107,36 @@ const res = await resolver.resolveSLD(`hns.hbar`)
 // 0.0.838546
 ```
 
+### Get Domain Information
+
+You will need to know the domain name, Hedera transaction ID, or the name hash in order to get the domain records.
+
+### `Resolver.getDomainInfo`
+
+#### Method:
+
+`getDomainInfo(domainOrNameHashOrTxId: string | NameHash): Promise<DomainInfo>`
+
+#### Parameter: 
+
+`domainOrNameHashOrTxId: string | NameHash`: A domain name, NameHash object, or [Hedera transaction ID](https://docs.hedera.com/hedera/sdks-and-apis/sdks/transactions/transaction-id). The transaction ID must be in either of these formats: &lt;accountId&gt;@&lt;seconds&gt;.&lt;nanoseconds&gt; or &lt;accountId&gt;-&lt;seconds&gt;.&lt;nanoseconds&gt;.
+
+#### Return:
+
+`Promise<DomainInfo>`: An object that represents the requested domain information. 
+
+##### Errors:
+
+`new Error('Invalid Input')`: The parameter is formatted incorrectly or incompatible
+
+`new Error('Unable to find metadata')`: The parameter is not yet registered
+
+`new Error('No Contract Address')`; The Json RPC wasn't able to find contract information
+
+#### Example:
+
+```javascript
+// Initialize the resolver
+const res = await resolver.getDomainInfo(`hns.hbar`);
+// {}
+```
