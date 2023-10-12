@@ -12,6 +12,7 @@ import { client } from './helpers/hashgraphSdkClient';
 import { getSldSmartContract, getTldSmartContract } from './smartContracts/getSmartContractService';
 import { formatHederaTxId, isNameHash } from './util/util';
 import { Indexer } from './indexer/IndexerAPI';
+import { registryQuery } from './indexer/routesApi';
 
 export const TEST_TLD_TOPIC_ID = '0.0.48097305';
 export const MAIN_TLD_TOPIC_ID = '0.0.1234189';
@@ -113,18 +114,27 @@ export class Resolver {
   }
 
   public async getAllDomainsForAccount(accountId: string): Promise<string[]> {
-    if (!accountId.startsWith('0.0.')) return [];
-    const topicMessages = await this.mirrorNode.getTldTopicMessage();
-    const userNftLists = await this.mirrorNode.getAllUserHNSNfts(topicMessages, accountId);
-    const nftDataTopicMessages = await this.mirrorNode.getNftTopicMessages(topicMessages, userNftLists);
-    const final = [];
-    for (let index = 0; index < nftDataTopicMessages.length; index += 1) {
-      const currMsgInfo = JSON.parse(Buffer.from(nftDataTopicMessages[index].message, 'base64').toString());
-      const checkAccountId = await this.resolveSLD(currMsgInfo.nameHash.domain);
-      if (checkAccountId === accountId && Boolean(checkAccountId)) { final.push(currMsgInfo.nameHash.domain); }
+    let isIndexerOnline = false;
+    try {
+      const res = await this.IndexerApi.getAllAccountsDomain(accountId);
+      return res.data.map((data) => data.domain);
+    } catch (error) {
+      if (error.statusCode >= 500) { isIndexerOnline = true; } else { return []; } // TODO - refactor error handling
     }
-
-    return final;
+    if (isIndexerOnline) {
+      if (!accountId.startsWith('0.0.')) return [];
+      const topicMessages = await this.mirrorNode.getTldTopicMessage();
+      const userNftLists = await this.mirrorNode.getAllUserHNSNfts(topicMessages, accountId);
+      const nftDataTopicMessages = await this.mirrorNode.getNftTopicMessages(topicMessages, userNftLists);
+      const final = [];
+      for (let index = 0; index < nftDataTopicMessages.length; index += 1) {
+        const currMsgInfo = JSON.parse(Buffer.from(nftDataTopicMessages[index].message, 'base64').toString());
+        const checkAccountId = await this.resolveSLD(currMsgInfo.nameHash.domain);
+        if (checkAccountId === accountId && Boolean(checkAccountId)) { final.push(currMsgInfo.nameHash.domain); }
+      }
+      return final;
+    }
+    throw new Error('Unable to Find All Names, At This Point Of Time');
   }
 
   public async getDomainInfo(domainOrNameHashOrTxId: string | NameHash) {
@@ -182,6 +192,36 @@ export class Resolver {
       return final;
     }
     throw new Error('Unable to Find At This Point Of Time');
+  }
+
+  public async queryByContractId(contractId:string) {
+    const query = `${registryQuery.contractId}${contractId}`;
+    try {
+      const res = await this.IndexerApi.getRegistry(query);
+      return res.data;
+    } catch (error) {
+      throw new Error('Unable to get domains for this contract ID'); // TODO - refactor error handling
+    }
+  }
+
+  public async queryByTLD(tld:string) {
+    const query = `${registryQuery.tld}${tld}`;
+    try {
+      const res = await this.IndexerApi.getRegistry(query);
+      return res.data;
+    } catch (error) {
+      throw new Error('Unable to get domains for this contract ID'); // TODO - refactor error handling
+    }
+  }
+
+  public async getDomainHistory(contractId:string) {
+    const query = `${registryQuery.contractId}${contractId}`;
+    try {
+      const res = await this.IndexerApi.getRegistry(query);
+      return res.data;
+    } catch (error) {
+      throw new Error('Unable to get domains for this contract ID'); // TODO - refactor error handling
+    }
   }
 
   // Private

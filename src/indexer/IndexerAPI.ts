@@ -9,7 +9,15 @@ export class Indexer {
   }
 
   async getDomainInfo(sld:string): Promise<AxiosResponse<DomainInfo>> {
-    const res = await axios.get(`${this.url}?domain=${sld}`);
+    const res = await axios.get(`${this.url}/domain?domain=${sld}`);
+    return res;
+  }
+  async getAllAccountsDomain(accountId:string): Promise<AxiosResponse<DomainInfo[]>> {
+    const res = await axios.get(`${this.url}/account/${accountId}`);
+    return res;
+  }
+  async getRegistry(query:string): Promise<AxiosResponse<DomainInfo[]>> {
+    const res = await axios.get(`${this.url}/registry${query}`);
     return res;
   }
 }
