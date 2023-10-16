@@ -11,11 +11,4 @@ export class BaseError extends Error {
     this.error = error;
     Object.setPrototypeOf(this, BaseError.prototype);
   }
-
-  generateErrorResponse = () => ({
-    status: this.status,
-    message: this.message,
-    path: this.path || 'path-not-found',
-    error: this.error,
-  });
 }
