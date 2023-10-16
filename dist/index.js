@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Resolver = exports.MAIN_TLD_TOPIC_ID = exports.TEST_TLD_TOPIC_ID = void 0;
 /* eslint-disable no-await-in-loop */
 const resolution_1 = __importDefault(require("@unstoppabledomains/resolution"));
+const axios_1 = __importDefault(require("axios"));
 const hashDomain_1 = require("./hashDomain");
 const MemoryCache_1 = require("./MemoryCache");
 const mirrorNode_1 = require("./mirrorNode");
@@ -14,6 +15,8 @@ const archived_1 = require("./archived");
 const getSmartContractService_1 = require("./smartContracts/getSmartContractService");
 const util_1 = require("./util/util");
 const IndexerAPI_1 = require("./indexer/IndexerAPI");
+const notFoundError_1 = require("./errorHandles/notFoundError");
+const tooManyRequest_1 = require("./errorHandles/tooManyRequest");
 exports.TEST_TLD_TOPIC_ID = '0.0.48097305';
 exports.MAIN_TLD_TOPIC_ID = '0.0.1234189';
 class Resolver {
@@ -61,25 +64,36 @@ class Resolver {
      * @returns {Promise<AccountId>}
      */
     async resolveSLD(domain) {
+        var _a;
         // TODO - Adding isUnstoppableDomain
         // Indexer API
-        let isIndexerOnline = false;
+        let isIndexerOnline = true;
         try {
             const res = await this.IndexerApi.getDomainInfo(domain);
             const d = new Date(0);
             d.setUTCSeconds(res.data.expiration);
-            return await Promise.resolve(new Date() < d ? res.data.account_id : '');
+            return new Date() < d ? res.data.account_id : '';
         }
         catch (error) {
-            if (error.statusCode >= 500) {
-                isIndexerOnline = true;
+            if (axios_1.default.isAxiosError(error)) {
+                switch ((_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.status) {
+                    case 500:
+                    case 502:
+                    case 503:
+                    case 504:
+                        isIndexerOnline = false;
+                        break;
+                    case 429:
+                        throw new tooManyRequest_1.TooManyRequests('Too Many Request');
+                    case 404:
+                        throw new notFoundError_1.NotFoundError('Domain Doesn\'t Exist');
+                    default:
+                        throw new Error('Something went wrong!');
+                }
             }
-            else {
-                return '';
-            } // TODO - refactor error handling
         }
         // Old Logic
-        if (isIndexerOnline) {
+        if (isIndexerOnline === false) {
             const nameHash = (0, hashDomain_1.hashDomain)(domain);
             const domainTopicMessage = await this.getSldTopicMessage(nameHash);
             const contractEVM = await this.getEvmContractAddress(domainTopicMessage.contractId);
@@ -109,6 +123,7 @@ class Resolver {
         return final;
     }
     async getDomainInfo(domainOrNameHashOrTxId) {
+        var _a;
         let nameHash;
         if (typeof domainOrNameHashOrTxId === 'string' && domainOrNameHashOrTxId.match(/[0-9].[0-9].[0-9]{1,7}@[0-9]{1,10}.[0-9]{1,9}/)) {
             const parseTxId = (0, util_1.formatHederaTxId)(domainOrNameHashOrTxId);
@@ -124,7 +139,7 @@ class Resolver {
         else {
             throw new Error('Invalid Input');
         }
-        let isIndexerOnline = false;
+        let isIndexerOnline = true;
         try {
             const res = await this.IndexerApi.getDomainInfo(nameHash.domain);
             const d = new Date(0);
@@ -147,14 +162,24 @@ class Resolver {
             return metadata;
         }
         catch (error) {
-            if (error.statusCode >= 500) {
-                isIndexerOnline = true;
+            if (axios_1.default.isAxiosError(error)) {
+                switch ((_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.status) {
+                    case 500:
+                    case 502:
+                    case 503:
+                    case 504:
+                        isIndexerOnline = false;
+                        break;
+                    case 429:
+                        throw new tooManyRequest_1.TooManyRequests('Too Many Request');
+                    case 404:
+                        throw new notFoundError_1.NotFoundError('Domain Doesn\'t Exist');
+                    default:
+                        throw new Error('Something went wrong!');
+                }
             }
-            else {
-                throw new Error('Not Found');
-            } // TODO - refactor error handling
         }
-        if (isIndexerOnline === true) {
+        if (isIndexerOnline === false) {
             const domainTopicMessage = await this.getSldTopicMessage(nameHash);
             const contractEVM = await this.getEvmContractAddress(domainTopicMessage.contractId);
             const tldContractService = await (0, getSmartContractService_1.getTldSmartContract)(contractEVM, this.jsonRPC);
@@ -170,7 +195,7 @@ class Resolver {
             final.expiration = (!foundData || new Date() < foundData.date) ? foundData === null || foundData === void 0 ? void 0 : foundData.date.getTime() : null;
             return final;
         }
-        throw new Error('Unable to Find At This Point Of Time');
+        throw new Error('Something went wrong!');
     }
     // Private
     getTldTopicId() {

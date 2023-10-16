@@ -2,6 +2,7 @@
 import unstoppableDomainsResolution from '@unstoppabledomains/resolution';
 import { ContractInfoQuery } from '@hashgraph/sdk/lib/exports';
 import { fromString } from '@hashgraph/sdk/lib/EntityIdHelper';
+import axios from 'axios';
 import { hashDomain } from './hashDomain';
 import { MemoryCache } from './MemoryCache';
 import { MirrorNode, NetworkType } from './mirrorNode';
@@ -12,6 +13,9 @@ import { client } from './helpers/hashgraphSdkClient';
 import { getSldSmartContract, getTldSmartContract } from './smartContracts/getSmartContractService';
 import { formatHederaTxId, isNameHash } from './util/util';
 import { Indexer } from './indexer/IndexerAPI';
+import { NotFoundError } from './errorHandles/notFoundError';
+import { TooManyRequests } from './errorHandles/tooManyRequest';
+import InternalServerError from './errorHandles/internalServerError';
 
 export const TEST_TLD_TOPIC_ID = '0.0.48097305';
 export const MAIN_TLD_TOPIC_ID = '0.0.1234189';
@@ -87,18 +91,33 @@ export class Resolver {
   public async resolveSLD(domain: string): Promise<string | undefined> {
     // TODO - Adding isUnstoppableDomain
     // Indexer API
-    let isIndexerOnline = false;
+    let isIndexerOnline = true;
     try {
       const res = await this.IndexerApi.getDomainInfo(domain);
       const d = new Date(0);
       d.setUTCSeconds(res.data.expiration);
-      return await Promise.resolve(new Date() < d ? res.data.account_id : '');
+      return new Date() < d ? res.data.account_id : '';
     } catch (error) {
-      if (error.statusCode >= 500) { isIndexerOnline = true; } else { return ''; } // TODO - refactor error handling
+      if (axios.isAxiosError(error)) {
+        switch (error?.response?.status) {
+          case 500:
+          case 502:
+          case 503:
+          case 504:
+            isIndexerOnline = false;
+            break;
+          case 429:
+            throw new TooManyRequests('Too Many Request');
+          case 404:
+            throw new NotFoundError('Domain Doesn\'t Exist');
+          default:
+            throw new Error('Something went wrong!');
+        }
+      }
     }
 
     // Old Logic
-    if (isIndexerOnline) {
+    if (isIndexerOnline === false) {
       const nameHash = hashDomain(domain);
       const domainTopicMessage = await this.getSldTopicMessage(nameHash);
       const contractEVM = await this.getEvmContractAddress(domainTopicMessage.contractId);
@@ -140,7 +159,7 @@ export class Resolver {
     } else {
       throw new Error('Invalid Input');
     }
-    let isIndexerOnline = false;
+    let isIndexerOnline = true;
     try {
       const res = await this.IndexerApi.getDomainInfo(nameHash.domain);
       const d = new Date(0);
@@ -163,9 +182,24 @@ export class Resolver {
 
       return metadata;
     } catch (error) {
-      if (error.statusCode >= 500) { isIndexerOnline = true; } else { throw new Error('Not Found'); } // TODO - refactor error handling
+      if (axios.isAxiosError(error)) {
+        switch (error?.response?.status) {
+          case 500:
+          case 502:
+          case 503:
+          case 504:
+            isIndexerOnline = false;
+            break;
+          case 429:
+            throw new TooManyRequests('Too Many Request');
+          case 404:
+            throw new NotFoundError('Domain Doesn\'t Exist');
+          default:
+            throw new Error('Something went wrong!');
+        }
+      }
     }
-    if (isIndexerOnline === true) {
+    if (isIndexerOnline === false) {
       const domainTopicMessage = await this.getSldTopicMessage(nameHash);
       const contractEVM = await this.getEvmContractAddress(domainTopicMessage.contractId);
       const tldContractService = await getTldSmartContract(contractEVM, this.jsonRPC);
@@ -181,7 +215,7 @@ export class Resolver {
       final.expiration = (!foundData || new Date() < foundData.date) ? foundData?.date.getTime() : null;
       return final;
     }
-    throw new Error('Unable to Find At This Point Of Time');
+    throw new Error('Something went wrong!');
   }
 
   // Private
