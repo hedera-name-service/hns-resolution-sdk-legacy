@@ -24,17 +24,22 @@
     "@hedera-name-service:registry": "https://registry.npmjs.org"
   },
   "devDependencies": {
+    "@bcw-research/eslint-config": "^0.0.3",
+    "@bcw-research/prettier-config": "^0.0.2",
     "@types/jest": "^29.2.5",
     "@types/node": "^18.11.18",
-    "@typescript-eslint/eslint-plugin": "^5.48.1",
-    "@typescript-eslint/parser": "^5.48.1",
-    "eslint": "^8.32.0",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "eslint": "^8.51.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.27.4",
     "jest": "^29.3.1",
+    "prettier": "^3.0.3",
     "ts-jest": "^29.0.5",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "@hashgraph/sdk": "^2.19.1",
