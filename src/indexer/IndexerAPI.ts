@@ -9,7 +9,11 @@ export class Indexer {
   }
 
   async getDomainInfo(sld:string): Promise<AxiosResponse<DomainInfo>> {
-    const res = await axios.get(`${this.url}?domain=${sld}`);
+    const res = await axios.get(`${this.url}/domains?domain=${sld}`);
+    return res;
+  }
+  async getAllDomainsInWallet(accountId:string): Promise<AxiosResponse<DomainInfo[]>> {
+    const res = await axios.get(`${this.url}/account/${accountId}`);
     return res;
   }
 }

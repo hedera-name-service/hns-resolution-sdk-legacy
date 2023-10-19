@@ -16,6 +16,7 @@ import { Indexer } from './indexer/IndexerAPI';
 import { NotFoundError } from './errorHandles/notFoundError';
 import { TooManyRequests } from './errorHandles/tooManyRequest';
 import InternalServerError from './errorHandles/internalServerError';
+import { DomainInfo, FilterOptions } from './types/indexer';
 
 export const TEST_TLD_TOPIC_ID = '0.0.48097305';
 export const MAIN_TLD_TOPIC_ID = '0.0.1234189';
@@ -131,19 +132,51 @@ export class Resolver {
     throw new Error('Unable to Find At This Point Of Time');
   }
 
-  public async getAllDomainsForAccount(accountId: string): Promise<string[]> {
-    if (!accountId.startsWith('0.0.')) return [];
-    const topicMessages = await this.mirrorNode.getTldTopicMessage();
-    const userNftLists = await this.mirrorNode.getAllUserHNSNfts(topicMessages, accountId);
-    const nftDataTopicMessages = await this.mirrorNode.getNftTopicMessages(topicMessages, userNftLists);
-    const final = [];
-    for (let index = 0; index < nftDataTopicMessages.length; index += 1) {
-      const currMsgInfo = JSON.parse(Buffer.from(nftDataTopicMessages[index].message, 'base64').toString());
-      const checkAccountId = await this.resolveSLD(currMsgInfo.nameHash.domain);
-      if (checkAccountId === accountId && Boolean(checkAccountId)) { final.push(currMsgInfo.nameHash.domain); }
+  public async getAllDomainsForAccount(accountId: string, options?:FilterOptions[]) {
+    if (!accountId.startsWith('0.0.')) throw new Error('Invalid Account Id');
+    let isIndexerOnline = true;
+    try {
+      const { data } = await this.IndexerApi.getAllDomainsInWallet(accountId);
+      const filteredNames = data.filter((domainInfo) => domainInfo !== null).map((domainInfo) => {
+        if (options) {
+          const res: Partial<DomainInfo> = { domain: domainInfo.domain };
+          options.forEach((e) => res[e] = domainInfo[e]);
+          return res;
+        }
+        return domainInfo.domain;
+      });
+      return filteredNames;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        switch (error?.response?.status) {
+          case 500:
+          case 502:
+          case 503:
+          case 504:
+            isIndexerOnline = false;
+            break;
+          case 429:
+            throw new TooManyRequests('Too Many Request');
+          default:
+            throw new Error('Something went wrong!');
+        }
+      }
     }
 
-    return final;
+    if (isIndexerOnline === false) {
+      const topicMessages = await this.mirrorNode.getTldTopicMessage();
+      const userNftLists = await this.mirrorNode.getAllUserHNSNfts(topicMessages, accountId);
+      const nftDataTopicMessages = await this.mirrorNode.getNftTopicMessages(topicMessages, userNftLists);
+      const final = [];
+      for (let index = 0; index < nftDataTopicMessages.length; index += 1) {
+        const currMsgInfo = JSON.parse(Buffer.from(nftDataTopicMessages[index].message, 'base64').toString());
+        const checkAccountId = await this.resolveSLD(currMsgInfo.nameHash.domain);
+        if (checkAccountId === accountId && Boolean(checkAccountId)) { final.push(currMsgInfo.nameHash.domain); }
+      }
+
+      return final;
+    }
+    throw new Error('Something went wrong!');
   }
 
   public async getDomainInfo(domainOrNameHashOrTxId: string | NameHash) {

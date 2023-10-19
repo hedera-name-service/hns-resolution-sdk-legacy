@@ -106,21 +106,54 @@ class Resolver {
         }
         throw new Error('Unable to Find At This Point Of Time');
     }
-    async getAllDomainsForAccount(accountId) {
+    async getAllDomainsForAccount(accountId, options) {
+        var _a;
         if (!accountId.startsWith('0.0.'))
-            return [];
-        const topicMessages = await this.mirrorNode.getTldTopicMessage();
-        const userNftLists = await this.mirrorNode.getAllUserHNSNfts(topicMessages, accountId);
-        const nftDataTopicMessages = await this.mirrorNode.getNftTopicMessages(topicMessages, userNftLists);
-        const final = [];
-        for (let index = 0; index < nftDataTopicMessages.length; index += 1) {
-            const currMsgInfo = JSON.parse(Buffer.from(nftDataTopicMessages[index].message, 'base64').toString());
-            const checkAccountId = await this.resolveSLD(currMsgInfo.nameHash.domain);
-            if (checkAccountId === accountId && Boolean(checkAccountId)) {
-                final.push(currMsgInfo.nameHash.domain);
+            throw new Error('Invalid Account Id');
+        let isIndexerOnline = true;
+        try {
+            const { data } = await this.IndexerApi.getAllDomainsInWallet(accountId);
+            const filteredNames = data.filter((domainInfo) => domainInfo !== null).map((domainInfo) => {
+                if (options) {
+                    const res = { domain: domainInfo.domain };
+                    options.forEach((e) => res[e] = domainInfo[e]);
+                    return res;
+                }
+                return domainInfo.domain;
+            });
+            return filteredNames;
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error)) {
+                switch ((_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.status) {
+                    case 500:
+                    case 502:
+                    case 503:
+                    case 504:
+                        isIndexerOnline = false;
+                        break;
+                    case 429:
+                        throw new tooManyRequest_1.TooManyRequests('Too Many Request');
+                    default:
+                        throw new Error('Something went wrong!');
+                }
             }
         }
-        return final;
+        if (isIndexerOnline === false) {
+            const topicMessages = await this.mirrorNode.getTldTopicMessage();
+            const userNftLists = await this.mirrorNode.getAllUserHNSNfts(topicMessages, accountId);
+            const nftDataTopicMessages = await this.mirrorNode.getNftTopicMessages(topicMessages, userNftLists);
+            const final = [];
+            for (let index = 0; index < nftDataTopicMessages.length; index += 1) {
+                const currMsgInfo = JSON.parse(Buffer.from(nftDataTopicMessages[index].message, 'base64').toString());
+                const checkAccountId = await this.resolveSLD(currMsgInfo.nameHash.domain);
+                if (checkAccountId === accountId && Boolean(checkAccountId)) {
+                    final.push(currMsgInfo.nameHash.domain);
+                }
+            }
+            return final;
+        }
+        throw new Error('Something went wrong!');
     }
     async getDomainInfo(domainOrNameHashOrTxId) {
         var _a;

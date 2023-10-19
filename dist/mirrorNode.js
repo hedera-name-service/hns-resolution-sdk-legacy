@@ -13,7 +13,7 @@ var NetworkBaseURL;
     NetworkBaseURL["hedera_main"] = "https://mainnet-public.mirrornode.hedera.com";
     NetworkBaseURL["arkhia_test"] = "https://hedera.testnet.arkhia.io";
     NetworkBaseURL["arkhia_main"] = "https://hashport.arkhia.io/hedera/mainnet";
-})(NetworkBaseURL = exports.NetworkBaseURL || (exports.NetworkBaseURL = {}));
+})(NetworkBaseURL || (exports.NetworkBaseURL = NetworkBaseURL = {}));
 const getBaseUrl = (networkType) => {
     switch (networkType) {
         case 'hedera_test':

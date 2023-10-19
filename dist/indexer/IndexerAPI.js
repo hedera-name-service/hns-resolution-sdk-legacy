@@ -11,7 +11,11 @@ class Indexer {
         this.url = (network === 'arkhia_test' || network === 'hedera_test') ? routesApi_1.DOMAIN_EP_TEST : routesApi_1.DOMAIN_EP_MAIN;
     }
     async getDomainInfo(sld) {
-        const res = await axios_1.default.get(`${this.url}?domain=${sld}`);
+        const res = await axios_1.default.get(`${this.url}/domains?domain=${sld}`);
+        return res;
+    }
+    async getAllDomainsInWallet(accountId) {
+        const res = await axios_1.default.get(`${this.url}/account/${accountId}`);
         return res;
     }
 }

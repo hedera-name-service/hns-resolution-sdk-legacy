@@ -26,3 +26,6 @@ export interface DomainInfo {
   metadata: string,
   modified_timestamp: string
 }
+
+export const FilterParamKeys = ['serial_number', 'token_id', 'metadata', 'expiration'] as const;
+export type FilterOptions = typeof FilterParamKeys[number];

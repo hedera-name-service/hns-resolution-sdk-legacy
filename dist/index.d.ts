@@ -1,5 +1,6 @@
 import { MirrorNode, NetworkType } from './mirrorNode';
 import { ICache, NameHash, ResolverOptions, SecondLevelDomain } from './types';
+import { FilterOptions } from './types/indexer';
 export declare const TEST_TLD_TOPIC_ID = "0.0.48097305";
 export declare const MAIN_TLD_TOPIC_ID = "0.0.1234189";
 export { ICache, Links, MessageObject, MessagesResponse, NFT, NFTsResponse, NameHash, SecondLevelDomain, TopLevelDomain, ResolverOptions, } from './types';
@@ -25,7 +26,7 @@ export declare class Resolver {
      * @returns {Promise<AccountId>}
      */
     resolveSLD(domain: string): Promise<string | undefined>;
-    getAllDomainsForAccount(accountId: string): Promise<string[]>;
+    getAllDomainsForAccount(accountId: string, options?: FilterOptions[]): Promise<any[]>;
     getDomainInfo(domainOrNameHashOrTxId: string | NameHash): Promise<any>;
     private getTldTopicId;
     /**

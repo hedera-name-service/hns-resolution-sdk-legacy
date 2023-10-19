@@ -4,4 +4,5 @@ export declare class Indexer {
     url: string;
     constructor(network: string);
     getDomainInfo(sld: string): Promise<AxiosResponse<DomainInfo>>;
+    getAllDomainsInWallet(accountId: string): Promise<AxiosResponse<DomainInfo[]>>;
 }
