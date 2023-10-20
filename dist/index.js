@@ -17,6 +17,7 @@ const util_1 = require("./util/util");
 const IndexerAPI_1 = require("./indexer/IndexerAPI");
 const notFoundError_1 = require("./errorHandles/notFoundError");
 const tooManyRequest_1 = require("./errorHandles/tooManyRequest");
+const indexer_1 = require("./types/indexer");
 exports.TEST_TLD_TOPIC_ID = '0.0.48097305';
 exports.MAIN_TLD_TOPIC_ID = '0.0.1234189';
 class Resolver {
@@ -110,6 +111,11 @@ class Resolver {
         var _a;
         if (!accountId.startsWith('0.0.'))
             throw new Error('Invalid Account Id');
+        if (options) {
+            const checkOptions = options.filter((key) => !indexer_1.FilterParamKeys.includes(key));
+            if (checkOptions.length !== 0)
+                throw new Error(`Invalid Options: ${checkOptions}`);
+        }
         let isIndexerOnline = true;
         try {
             const { data } = await this.IndexerApi.getAllDomainsInWallet(accountId);

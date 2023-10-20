@@ -16,7 +16,7 @@ import { Indexer } from './indexer/IndexerAPI';
 import { NotFoundError } from './errorHandles/notFoundError';
 import { TooManyRequests } from './errorHandles/tooManyRequest';
 import InternalServerError from './errorHandles/internalServerError';
-import { DomainInfo, FilterOptions } from './types/indexer';
+import { DomainInfo, FilterOptions, FilterParamKeys } from './types/indexer';
 
 export const TEST_TLD_TOPIC_ID = '0.0.48097305';
 export const MAIN_TLD_TOPIC_ID = '0.0.1234189';
@@ -134,6 +134,10 @@ export class Resolver {
 
   public async getAllDomainsForAccount(accountId: string, options?:FilterOptions[]) {
     if (!accountId.startsWith('0.0.')) throw new Error('Invalid Account Id');
+    if (options) {
+      const checkOptions = options.filter((key) => !FilterParamKeys.includes(key));
+      if (checkOptions.length !== 0) throw new Error(`Invalid Options: ${checkOptions}`);
+    }
     let isIndexerOnline = true;
     try {
       const { data } = await this.IndexerApi.getAllDomainsInWallet(accountId);
