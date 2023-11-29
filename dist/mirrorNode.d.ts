@@ -1,11 +1,11 @@
-import { NFT } from './types/NFT';
-import { NameHash } from './types/NameHash';
-export type NetworkType = 'hedera_test' | 'hedera_main' | 'arkhia_test' | 'arkhia_main';
+import { NameHash } from "./types/NameHash";
+import { NFT } from "./types/NFT";
+export type NetworkType = `hedera_test` | `hedera_main` | `arkhia_test` | `arkhia_main`;
 export declare enum NetworkBaseURL {
-    'hedera_test' = "https://testnet.mirrornode.hedera.com",
-    'hedera_main' = "https://mainnet-public.mirrornode.hedera.com",
-    'arkhia_test' = "https://hedera.testnet.arkhia.io",
-    'arkhia_main' = "https://hashport.arkhia.io/hedera/mainnet"
+    hedera_test = "https://testnet.mirrornode.hedera.com",
+    hedera_main = "https://mainnet-public.mirrornode.hedera.com",
+    arkhia_test = "https://hedera.testnet.arkhia.io",
+    arkhia_main = "https://hashport.arkhia.io/hedera/mainnet"
 }
 export declare const getBaseUrl: (networkType: NetworkType) => NetworkBaseURL;
 export declare const MAX_PAGE_SIZE = 100;
