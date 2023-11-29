@@ -27,5 +27,35 @@ export interface DomainInfo {
   modified_timestamp: string
 }
 
-export const FilterParamKeys = ['serial_number', 'token_id', 'metadata', 'expiration'] as const;
+export interface AccountDomainInfo {
+  idx: number,
+  account_id: string,
+  created_timestamp: string,
+  token_id: string,
+  serial_number: number,
+  delegating_spender: string,
+  deleted: string,
+  metadata: string,
+  modified_timestamp: string,
+  network: string,
+  full_nft_id: string,
+  topic_id: string,
+  paymenttransaction_id: string,
+  topictransaction_id:string,
+  domain: string,
+  tld_hash: string,
+  sld_hash: string,
+  provider: string,
+  contract_id: string,
+  expiration: string,
+  nft_id: number,
+  tld: string,
+  payer_account_id: string,
+  running_hash: string,
+  running_hash_version: string,
+  sequence_number: number,
+  expiry: number
+}
+
+export const FilterParamKeys = ['serial_number', 'token_id', 'metadata', 'expiry'] as const;
 export type FilterOptions = typeof FilterParamKeys[number];

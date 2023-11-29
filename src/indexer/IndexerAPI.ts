@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
 import { DOMAIN_EP_MAIN, DOMAIN_EP_TEST } from './routesApi';
-import { DomainInfo } from '../types/indexer';
+import { AccountDomainInfo, DomainInfo } from '../types/indexer';
 
 export class Indexer {
   url: string;
@@ -12,7 +12,7 @@ export class Indexer {
     const res = await axios.get(`${this.url}/domains?domain=${sld}`);
     return res;
   }
-  async getAllDomainsInWallet(accountId:string): Promise<AxiosResponse<DomainInfo[]>> {
+  async getAllDomainsInWallet(accountId:string): Promise<AxiosResponse<AccountDomainInfo[]>> {
     const res = await axios.get(`${this.url}/account/${accountId}`);
     return res;
   }

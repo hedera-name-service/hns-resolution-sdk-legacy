@@ -16,7 +16,7 @@ import { Indexer } from './indexer/IndexerAPI';
 import { NotFoundError } from './errorHandles/notFoundError';
 import { TooManyRequests } from './errorHandles/tooManyRequest';
 import InternalServerError from './errorHandles/internalServerError';
-import { DomainInfo, FilterOptions, FilterParamKeys } from './types/indexer';
+import { AccountDomainInfo, DomainInfo, FilterOptions, FilterParamKeys } from './types/indexer';
 
 export const TEST_TLD_TOPIC_ID = '0.0.48097305';
 export const MAIN_TLD_TOPIC_ID = '0.0.1234189';
@@ -143,8 +143,8 @@ export class Resolver {
       const { data } = await this.IndexerApi.getAllDomainsInWallet(accountId);
       const filteredNames = data.filter((domainInfo) => domainInfo !== null).map((domainInfo) => {
         if (options) {
-          const res: Partial<DomainInfo> = { domain: domainInfo.domain };
-          options.forEach((e) => res[e] = domainInfo[e]);
+          const res: Partial<AccountDomainInfo> = { domain: domainInfo.domain };
+          options.forEach((key) => res[key] = domainInfo[key]);
           return res;
         }
         return domainInfo.domain;
