@@ -24,34 +24,39 @@ Initialize the resolver by defining the API service you will use with the SDK an
 Example to initialize resolver with `hedera_main`:
 
 ```javascript
-import { Resolver } from 'hns-resolution-sdk';
+import { Resolver } from "hns-resolution-sdk";
 // Which will use the default JSON-RPC Provider, Hashio.io
-const resolver = new Resolver('hedera_main');
-
+const resolver = new Resolver("hedera_main");
 ```
+
 - `arkhia_main`: Hedera Mainnet Arkhia API Service
 - `arkhia_test`: Hedera Testnet Arkhia API Service
 
 Example to initialize resolver with `arkhia_main`:
 
 ```javascript
-import { Resolver } from 'hns-resolution-sdk';
+import { Resolver } from "hns-resolution-sdk";
 // Which will use the default JSON-RPC Provider, Hashio.io
-const resolver = new Resolver('arkhia_main', 'x-api-key', `${process.env.apiKey}`);
+const resolver = new Resolver("arkhia_main", "arkhiaUrl", "x-api-key", `${process.env.apiKey}`);
 ```
 
-Example to use Arkhia JSON-RPC with `arkhia_main`: 
+Example to use Arkhia JSON-RPC with `arkhia_main`:
+
 ```javascript
-import { Resolver } from 'hns-resolution-sdk';
+import { Resolver } from "hns-resolution-sdk";
 
-const resolver = new Resolver('arkhia_main', 'x-api-key', `${process.env.apiKey}`, `arkhiaJrpcUrl`);
+const resolver = new Resolver(
+  "arkhia_main",
+  "arkhiaUrl",
+  "x-api-key",
+  `${process.env.apiKey}`,
+  `arkhiaJrpcUrl`,
+);
 ```
-
 
 > **Note:** The example above demonstrates how to initialize the resolver with [Arkhia](https://arkhia.io). This is only for demonstration purposes and should not be implemented on any client side code. Always keep your API keys hidden!
 
-**Note:** There is an env.example with setup example for easy set up for developers 
-
+**Note:** There is an env.example with setup example for easy set up for developers
 
 ### Resolving Domains from Account IDs
 
@@ -65,7 +70,7 @@ HNS supports reverse resolution to all applications to display HNS names in plac
 
 `getAllDomainsForAccount(accountId: string): Promise<string[]>`
 
-#### Parameter: 
+#### Parameter:
 
 `accountId: string`: A Hedera Account ID in the format of `0.0.<Account>`. Read the docs on [Hedera Account IDs](https://docs.hedera.com/hedera/core-concepts/accounts/account-properties#account-id) for more info.
 
@@ -77,7 +82,7 @@ HNS supports reverse resolution to all applications to display HNS names in plac
 
 ```javascript
 // Initialize the resolver
-const res = await resolver.getAllDomainsForAccount(`0.0.800`)
+const res = await resolver.getAllDomainsForAccount(`0.0.800`);
 // []
 ```
 
@@ -91,7 +96,7 @@ Domains can have many types of data associated with them; the most common is cry
 
 `resolveSLD(domain: string): Promise<string | undefined>`
 
-#### Parameter: 
+#### Parameter:
 
 `domain: string`: Any valid string that could represent a domain name.
 
@@ -103,7 +108,7 @@ Domains can have many types of data associated with them; the most common is cry
 
 ```javascript
 // Initialize the resolver
-const res = await resolver.resolveSLD(`hns.hbar`)
+const res = await resolver.resolveSLD(`hns.hbar`);
 // 0.0.838546
 ```
 
@@ -117,13 +122,13 @@ You will need to know the domain name, Hedera transaction ID, or the name hash i
 
 `getDomainInfo(domainOrNameHashOrTxId: string | NameHash): Promise<DomainInfo>`
 
-#### Parameter: 
+#### Parameter:
 
 `domainOrNameHashOrTxId: string | NameHash`: A domain name, NameHash object, or [Hedera transaction ID](https://docs.hedera.com/hedera/sdks-and-apis/sdks/transactions/transaction-id). The transaction ID must be in either of these formats: &lt;accountId&gt;@&lt;seconds&gt;.&lt;nanoseconds&gt; or &lt;accountId&gt;-&lt;seconds&gt;.&lt;nanoseconds&gt;.
 
 #### Return:
 
-`Promise<DomainInfo>`: An object that represents the requested domain information. 
+`Promise<DomainInfo>`: An object that represents the requested domain information.
 
 ##### Errors:
 

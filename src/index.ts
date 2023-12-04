@@ -1,33 +1,33 @@
 /* eslint-disable no-await-in-loop */
-import unstoppableDomainsResolution from '@unstoppabledomains/resolution';
-import { ContractInfoQuery } from '@hashgraph/sdk/lib/exports';
-import { fromString } from '@hashgraph/sdk/lib/EntityIdHelper';
-import { hashDomain } from './hashDomain';
-import { MemoryCache } from './MemoryCache';
-import { MirrorNode, NetworkType } from './mirrorNode';
-import { PollingTopicSubscriber } from './topicSubscriber/pollingTopicSubscriber';
-import { ICache, NameHash, ResolverOptions, SecondLevelDomain, TopLevelDomain } from './types';
-import { HashgraphNames } from './archived';
-import { client } from './helpers/hashgraphSdkClient';
-import { getSldSmartContract, getTldSmartContract } from './smartContracts/getSmartContractService';
-import { formatHederaTxId, isNameHash } from './util/util';
-import { Indexer } from './indexer/IndexerAPI';
+import { fromString } from "@hashgraph/sdk/lib/EntityIdHelper";
+import { ContractInfoQuery } from "@hashgraph/sdk/lib/exports";
+import unstoppableDomainsResolution from "@unstoppabledomains/resolution";
+import { HashgraphNames } from "./archived";
+import { hashDomain } from "./hashDomain";
+import { client } from "./helpers/hashgraphSdkClient";
+import { Indexer } from "./indexer/IndexerAPI";
+import { MemoryCache } from "./MemoryCache";
+import { MirrorNode, NetworkType } from "./mirrorNode";
+import { getSldSmartContract, getTldSmartContract } from "./smartContracts/getSmartContractService";
+import { PollingTopicSubscriber } from "./topicSubscriber/pollingTopicSubscriber";
+import { ICache, NameHash, ResolverOptions, SecondLevelDomain, TopLevelDomain } from "./types";
+import { formatHederaTxId, isNameHash } from "./util/util";
 
-export const TEST_TLD_TOPIC_ID = '0.0.48097305';
-export const MAIN_TLD_TOPIC_ID = '0.0.1234189';
+export const TEST_TLD_TOPIC_ID = `0.0.48097305`;
+export const MAIN_TLD_TOPIC_ID = `0.0.1234189`;
 
 export {
   ICache,
   Links,
   MessageObject,
   MessagesResponse,
+  NameHash,
   NFT,
   NFTsResponse,
-  NameHash,
+  ResolverOptions,
   SecondLevelDomain,
   TopLevelDomain,
-  ResolverOptions,
-} from './types';
+} from "./types";
 
 export class Resolver {
   mirrorNode: MirrorNode;
@@ -40,14 +40,23 @@ export class Resolver {
   isCaughtUpPromise: Promise<unknown> = Promise.resolve();
   private IndexerApi: Indexer;
 
-  constructor(networkType: NetworkType, authHeader = '', authKey = '', jsonRPC = '', cache?: ICache, resolverOptions?: ResolverOptions) {
-    this.mirrorNode = new MirrorNode(networkType, authHeader, authKey);
+  constructor(
+    networkType: NetworkType,
+    arkhiaUrl?: string,
+    authHeader = ``,
+    authKey = ``,
+    jsonRPC = ``,
+    cache?: ICache,
+    resolverOptions?: ResolverOptions,
+  ) {
+    this.mirrorNode = new MirrorNode(networkType, authHeader, authKey, arkhiaUrl);
     if (!cache) {
       this.cache = new MemoryCache();
     } else {
       this.cache = cache;
     }
-    this.jsonRPC = ((authHeader && authKey && jsonRPC) || jsonRPC) ? jsonRPC : 'https://mainnet.hashio.io/api';
+    this.jsonRPC =
+      (authHeader && authKey && jsonRPC) || jsonRPC ? jsonRPC : `https://mainnet.hashio.io/api`;
     if (resolverOptions) {
       this._options = resolverOptions;
     }
@@ -92,9 +101,13 @@ export class Resolver {
       const res = await this.IndexerApi.getDomainInfo(domain);
       const d = new Date(0);
       d.setUTCSeconds(res.data.expiration);
-      return await Promise.resolve(new Date() < d ? res.data.account_id : '');
+      return await Promise.resolve(new Date() < d ? res.data.account_id : ``);
     } catch (error) {
-      if (error.statusCode >= 500) { isIndexerOnline = true; } else { return ''; } // TODO - refactor error handling
+      if (error.statusCode >= 500) {
+        isIndexerOnline = true;
+      } else {
+        return ``;
+      } // TODO - refactor error handling
     }
 
     // Old Logic
@@ -104,24 +117,35 @@ export class Resolver {
       const contractEVM = await this.getEvmContractAddress(domainTopicMessage.contractId);
       const tldContractService = await getTldSmartContract(contractEVM, this.jsonRPC);
       const contractList = await tldContractService.getNodes();
-      if (contractList.length === 0) throw Error('No Contract Address');
-      const { foundData, nftInfo } = await this.getAccountInfo(contractList, nameHash, domainTopicMessage.tokenId);
+      if (contractList.length === 0) throw Error(`No Contract Address`);
+      const { foundData, nftInfo } = await this.getAccountInfo(
+        contractList,
+        nameHash,
+        domainTopicMessage.tokenId,
+      );
 
-      return Promise.resolve(foundData && new Date() < foundData.date ? nftInfo.account_id : '');
+      return Promise.resolve(foundData && new Date() < foundData.date ? nftInfo.account_id : ``);
     }
-    throw new Error('Unable to Find At This Point Of Time');
+    throw new Error(`Unable to Find At This Point Of Time`);
   }
 
   public async getAllDomainsForAccount(accountId: string): Promise<string[]> {
-    if (!accountId.startsWith('0.0.')) return [];
+    if (!accountId.startsWith(`0.0.`)) return [];
     const topicMessages = await this.mirrorNode.getTldTopicMessage();
     const userNftLists = await this.mirrorNode.getAllUserHNSNfts(topicMessages, accountId);
-    const nftDataTopicMessages = await this.mirrorNode.getNftTopicMessages(topicMessages, userNftLists);
+    const nftDataTopicMessages = await this.mirrorNode.getNftTopicMessages(
+      topicMessages,
+      userNftLists,
+    );
     const final = [];
     for (let index = 0; index < nftDataTopicMessages.length; index += 1) {
-      const currMsgInfo = JSON.parse(Buffer.from(nftDataTopicMessages[index].message, 'base64').toString());
+      const currMsgInfo = JSON.parse(
+        Buffer.from(nftDataTopicMessages[index].message, `base64`).toString(),
+      );
       const checkAccountId = await this.resolveSLD(currMsgInfo.nameHash.domain);
-      if (checkAccountId === accountId && Boolean(checkAccountId)) { final.push(currMsgInfo.nameHash.domain); }
+      if (checkAccountId === accountId && Boolean(checkAccountId)) {
+        final.push(currMsgInfo.nameHash.domain);
+      }
     }
 
     return final;
@@ -129,16 +153,24 @@ export class Resolver {
 
   public async getDomainInfo(domainOrNameHashOrTxId: string | NameHash) {
     let nameHash: NameHash;
-    if (typeof domainOrNameHashOrTxId === 'string' && domainOrNameHashOrTxId.match(/[0-9].[0-9].[0-9]{1,7}@[0-9]{1,10}.[0-9]{1,9}/)) {
+    if (
+      typeof domainOrNameHashOrTxId === `string` &&
+      domainOrNameHashOrTxId.match(/[0-9].[0-9].[0-9]{1,7}@[0-9]{1,10}.[0-9]{1,9}/)
+    ) {
       const parseTxId = formatHederaTxId(domainOrNameHashOrTxId);
       const domainName = await this.mirrorNode.getTxInfo(parseTxId);
-      nameHash = HashgraphNames.generateNameHash(domainName.newDomain || domainName.extendedDomain || domainName.expiredDomain);
-    } else if (typeof domainOrNameHashOrTxId === 'string' && domainOrNameHashOrTxId.match(/\.[hbar]|\.[boo]|\.[cream]/)) {
+      nameHash = HashgraphNames.generateNameHash(
+        domainName.newDomain || domainName.extendedDomain || domainName.expiredDomain,
+      );
+    } else if (
+      typeof domainOrNameHashOrTxId === `string` &&
+      domainOrNameHashOrTxId.match(/\.[hbar]|\.[boo]|\.[cream]/)
+    ) {
       nameHash = HashgraphNames.generateNameHash(domainOrNameHashOrTxId);
-    } else if (typeof domainOrNameHashOrTxId === 'object' && isNameHash(domainOrNameHashOrTxId)) {
+    } else if (typeof domainOrNameHashOrTxId === `object` && isNameHash(domainOrNameHashOrTxId)) {
       nameHash = domainOrNameHashOrTxId;
     } else {
-      throw new Error('Invalid Input');
+      throw new Error(`Invalid Input`);
     }
     let isIndexerOnline = false;
     try {
@@ -146,7 +178,7 @@ export class Resolver {
       const d = new Date(0);
       d.setUTCSeconds(res.data.expiration);
       const metadata = {
-        transactionId: res.data.paymenttransaction_id.split('@')[1],
+        transactionId: res.data.paymenttransaction_id.split(`@`)[1],
         nameHash: {
           domain: res.data.domain,
           tldHash: res.data.tld_hash,
@@ -158,36 +190,48 @@ export class Resolver {
         providerData: {
           contractId: res.data.contract_id,
         },
-        accountId: new Date() < d ? res.data.account_id : '',
+        accountId: new Date() < d ? res.data.account_id : ``,
       };
 
       return metadata;
     } catch (error) {
-      if (error.statusCode >= 500) { isIndexerOnline = true; } else { throw new Error('Not Found'); } // TODO - refactor error handling
+      if (error.statusCode >= 500) {
+        isIndexerOnline = true;
+      } else {
+        throw new Error(`Not Found`);
+      } // TODO - refactor error handling
     }
     if (isIndexerOnline === true) {
       const domainTopicMessage = await this.getSldTopicMessage(nameHash);
       const contractEVM = await this.getEvmContractAddress(domainTopicMessage.contractId);
       const tldContractService = await getTldSmartContract(contractEVM, this.jsonRPC);
       const contractList = await tldContractService.getNodes();
-      if (contractList.length === 0) throw Error('No Contract Address');
-      const { foundData, nftInfo } = await this.getAccountInfo(contractList, nameHash, domainTopicMessage.tokenId);
+      if (contractList.length === 0) throw Error(`No Contract Address`);
+      const { foundData, nftInfo } = await this.getAccountInfo(
+        contractList,
+        nameHash,
+        domainTopicMessage.tokenId,
+      );
 
-      const nftDataTopicMessage = await this.mirrorNode.getNftInfoTopicMessage(domainTopicMessage.topicId, nftInfo);
-      if (nftDataTopicMessage.length === 0) throw new Error('Unable to Find MetaData');
-      const final = JSON.parse(Buffer.from(nftDataTopicMessage[0].message, 'base64').toString());
+      const nftDataTopicMessage = await this.mirrorNode.getNftInfoTopicMessage(
+        domainTopicMessage.topicId,
+        nftInfo,
+      );
+      if (nftDataTopicMessage.length === 0) throw new Error(`Unable to Find MetaData`);
+      const final = JSON.parse(Buffer.from(nftDataTopicMessage[0].message, `base64`).toString());
 
-      final.accountId = (!foundData || new Date() < foundData.date) ? nftInfo.account_id : '';
-      final.expiration = (!foundData || new Date() < foundData.date) ? foundData?.date.getTime() : null;
+      final.accountId = !foundData || new Date() < foundData.date ? nftInfo.account_id : ``;
+      final.expiration =
+        !foundData || new Date() < foundData.date ? foundData?.date.getTime() : null;
       return final;
     }
-    throw new Error('Unable to Find At This Point Of Time');
+    throw new Error(`Unable to Find At This Point Of Time`);
   }
 
   // Private
 
   private getTldTopicId(): string {
-    if (this.mirrorNode.networkType.includes('test')) return TEST_TLD_TOPIC_ID;
+    if (this.mirrorNode.networkType.includes(`test`)) return TEST_TLD_TOPIC_ID;
     return MAIN_TLD_TOPIC_ID;
   }
 
@@ -201,10 +245,7 @@ export class Resolver {
           this.mirrorNode.networkType,
           this.getTldTopicId(),
           (messageObj) => {
-            const decoded = Buffer.from(
-              messageObj.message,
-              'base64',
-            ).toString();
+            const decoded = Buffer.from(messageObj.message, `base64`).toString();
             const tld = JSON.parse(decoded) as TopLevelDomain;
 
             // always set the cache to the latest tld on the topic
@@ -228,16 +269,14 @@ export class Resolver {
    * @param nameHash: {NameHash} The nameHash for the sld to query
    * @returns {Promise<TLDTopicMessage>}
    */
-  private async getTopLevelDomain(
-    nameHash: NameHash,
-  ): Promise<TopLevelDomain | undefined> {
+  private async getTopLevelDomain(nameHash: NameHash): Promise<TopLevelDomain | undefined> {
     while (!this._isCaughtUpWithTopic.get(this.getTldTopicId())) {
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
 
-    const tldHash = nameHash.tldHash.toString('hex');
+    const tldHash = nameHash.tldHash.toString(`hex`);
     const found = this.cache.hasTld(tldHash);
-    if (!found) throw new Error('TLD not found');
+    if (!found) throw new Error(`TLD not found`);
 
     return this.cache.getTld(tldHash)!;
   }
@@ -252,10 +291,7 @@ export class Resolver {
           this.mirrorNode.networkType,
           topicId,
           async (messageObj) => {
-            const decoded = Buffer.from(
-              messageObj.message,
-              'base64',
-            ).toString();
+            const decoded = Buffer.from(messageObj.message, `base64`).toString();
             const sld = JSON.parse(decoded) as SecondLevelDomain;
 
             if (messageObj.sequence_number) {
@@ -265,9 +301,7 @@ export class Resolver {
             const { tldHash } = sld.nameHash;
             const { sldHash } = sld.nameHash;
             if (await this.cache.hasTld(tldHash)) {
-              const cachedSld = await Promise.resolve(
-                this.cache.getSld(tldHash, sldHash)!,
-              );
+              const cachedSld = await Promise.resolve(this.cache.getSld(tldHash, sldHash)!);
               // TODO: replace if the one in cache is expired
               if (!cachedSld) {
                 this.cache.setSld(tldHash, sld);
@@ -296,13 +330,11 @@ export class Resolver {
    */
 
   // Improve method to look for unexpired domains
-  public async getSecondLevelDomain(
-    nameHash: NameHash,
-  ): Promise<SecondLevelDomain | undefined> {
+  public async getSecondLevelDomain(nameHash: NameHash): Promise<SecondLevelDomain | undefined> {
     const tld = await this.getTopLevelDomain(nameHash);
     if (!tld) return undefined;
-    const tldHash = nameHash.tldHash.toString('hex');
-    const sldHash = nameHash.sldHash.toString('hex');
+    const tldHash = nameHash.tldHash.toString(`hex`);
+    const sldHash = nameHash.sldHash.toString(`hex`);
 
     let isCaughtUp = false;
     while (!isCaughtUp) {
@@ -314,31 +346,34 @@ export class Resolver {
     }
 
     throw new Error(
-      `SLD message for:[${nameHash.domain
-      }] not found on topic:[${tld.topicId.toString()}]`,
+      `SLD message for:[${nameHash.domain}] not found on topic:[${tld.topicId.toString()}]`,
     );
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async getSldTopicMessage(nameHash:NameHash) {
+  private async getSldTopicMessage(nameHash: NameHash) {
     const sldTopicMsg = await this.mirrorNode.getTopicMessage(nameHash);
     return sldTopicMsg;
   }
 
-  private async getEvmContractAddress(contractId:string) {
+  private async getEvmContractAddress(contractId: string) {
     const evmAddress = this.mirrorNode.getContractEvmAddress(contractId);
     return evmAddress;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async getAccountInfo(contractList:string[], nameHash: NameHash, tokenId: string) {
+  private async getAccountInfo(contractList: string[], nameHash: NameHash, tokenId: string) {
     let foundData;
-    if (contractList.length === 0) throw Error('Evm Contract Issues');
+    if (contractList.length === 0) throw Error(`Evm Contract Issues`);
 
     for (let index = 0; index < contractList.length; index += 1) {
       const SLDcontracts = getSldSmartContract(contractList[index], this.jsonRPC);
-      const serial = await SLDcontracts.getSerial(`0x${Buffer.from(nameHash.sldHash).toString('hex')}`);
-      const dateExp = await SLDcontracts.getExpiry(`0x${Buffer.from(nameHash.sldHash).toString('hex')}`);
+      const serial = await SLDcontracts.getSerial(
+        `0x${Buffer.from(nameHash.sldHash).toString(`hex`)}`,
+      );
+      const dateExp = await SLDcontracts.getExpiry(
+        `0x${Buffer.from(nameHash.sldHash).toString(`hex`)}`,
+      );
       if (dateExp !== 0) {
         const d = new Date(0);
         d.setUTCSeconds(dateExp);
@@ -346,7 +381,7 @@ export class Resolver {
         break;
       }
     }
-    if (!foundData) throw Error('No Serial');
+    if (!foundData) throw Error(`No Serial`);
 
     const nftInfo = await this.mirrorNode.getNFT(tokenId, `${foundData?.serial}`);
 

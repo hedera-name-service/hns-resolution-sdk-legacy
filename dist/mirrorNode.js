@@ -6,49 +6,49 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MirrorNode = exports.MAX_PAGE_SIZE = exports.getBaseUrl = exports.NetworkBaseURL = void 0;
 const axios_1 = __importDefault(require("axios"));
 const _1 = require(".");
-const DOMAINS = ['hbar', 'boo', 'cream'];
+const DOMAINS = [`hbar`, `boo`, `cream`];
 var NetworkBaseURL;
 (function (NetworkBaseURL) {
     NetworkBaseURL["hedera_test"] = "https://testnet.mirrornode.hedera.com";
     NetworkBaseURL["hedera_main"] = "https://mainnet-public.mirrornode.hedera.com";
     NetworkBaseURL["arkhia_test"] = "https://hedera.testnet.arkhia.io";
     NetworkBaseURL["arkhia_main"] = "https://hashport.arkhia.io/hedera/mainnet";
-})(NetworkBaseURL = exports.NetworkBaseURL || (exports.NetworkBaseURL = {}));
+})(NetworkBaseURL || (exports.NetworkBaseURL = NetworkBaseURL = {}));
 const getBaseUrl = (networkType) => {
     switch (networkType) {
-        case 'hedera_test':
+        case `hedera_test`:
             return NetworkBaseURL.hedera_test;
-        case 'hedera_main':
+        case `hedera_main`:
             return NetworkBaseURL.hedera_main;
-        case 'arkhia_test':
+        case `arkhia_test`:
             return NetworkBaseURL.arkhia_test;
-        case 'arkhia_main':
+        case `arkhia_main`:
             return NetworkBaseURL.arkhia_main;
         default:
-            throw new Error('No base URL available for NetworkType');
+            throw new Error(`No base URL available for NetworkType`);
     }
 };
 exports.getBaseUrl = getBaseUrl;
 // Max page size allowed by hedera nodes
 exports.MAX_PAGE_SIZE = 100;
 class MirrorNode {
-    constructor(networkType, authHeader = '', authKey = '') {
+    constructor(networkType, authHeader = ``, authKey = ``, url) {
         this.networkType = networkType;
-        this.baseUrl = this.getBaseUrl();
+        this.baseUrl = url ? url : this.getBaseUrl();
         this.authHeader = authHeader;
         this.authKey = authKey;
     }
     async getNFT(tokenId, serial) {
-        const url = `${this.getBaseUrl()}/api/v1/tokens/${tokenId}/nfts/${serial}`;
+        const url = `${this.baseUrl}/api/v1/tokens/${tokenId}/nfts/${serial}`;
         const res = await this.sendGetRequest(url);
         return res.data;
     }
     async getNFTsByAccountId(tokenId, accountId) {
-        const url = `${this.getBaseUrl()}/api/v1/accounts/${accountId}/nfts?token.id=${tokenId}&limit=100`;
+        const url = `${this.baseUrl}/api/v1/accounts/${accountId}/nfts?token.id=${tokenId}&limit=100`;
         let res = await this.sendGetRequest(url);
         const { nfts } = res.data;
         while (res.data.links.next) {
-            const nextUrl = `${this.getBaseUrl()}${res.data.links.next}`;
+            const nextUrl = `${this.baseUrl}${res.data.links.next}`;
             // eslint-disable-next-line no-await-in-loop
             res = await this.sendGetRequest(nextUrl);
             const nextNfts = res.data.nfts;
@@ -57,24 +57,24 @@ class MirrorNode {
         return nfts;
     }
     async getTopicMessage(nameHash) {
-        const urlTopicManger = `${this.getBaseUrl()}/api/v1/topics/${_1.MAIN_TLD_TOPIC_ID}/messages`;
+        const urlTopicManger = `${this.baseUrl}/api/v1/topics/${_1.MAIN_TLD_TOPIC_ID}/messages`;
         const res = await this.sendGetRequest(urlTopicManger);
         const { messages } = res.data;
         const topicMessages = messages.map((x) => {
-            const decoded = Buffer.from(x.message, 'base64').toString();
+            const decoded = Buffer.from(x.message, `base64`).toString();
             return JSON.parse(decoded);
         });
-        const found = topicMessages.find((message) => message.nameHash.tldHash === nameHash.tldHash.toString('hex'));
+        const found = topicMessages.find((message) => message.nameHash.tldHash === nameHash.tldHash.toString(`hex`));
         return found;
     }
     async getTxInfo(txId) {
-        const urlTopicManger = `${this.getBaseUrl()}/api/v1/transactions/${txId}`;
+        const urlTopicManger = `${this.baseUrl}/api/v1/transactions/${txId}`;
         const res = await this.sendGetRequest(urlTopicManger);
-        const domainName = JSON.parse(Buffer.from(res.data.transactions[0].memo_base64, 'base64').toString());
+        const domainName = JSON.parse(Buffer.from(res.data.transactions[0].memo_base64, `base64`).toString());
         return domainName;
     }
     async getContractEvmAddress(contractId) {
-        const url = `${this.getBaseUrl()}/api/v1/contracts/${contractId}`;
+        const url = `${this.baseUrl}/api/v1/contracts/${contractId}`;
         const res = await this.sendGetRequest(url);
         return res.data.evm_address;
     }
@@ -82,11 +82,11 @@ class MirrorNode {
     async getNftTopicMessages(topicMessages, userNftLists) {
         const nftDataMessages = [];
         for (let index = 0; index < topicMessages.length; index += 1) {
-            const urlTopicManger = `${this.getBaseUrl()}/api/v1/topics/${topicMessages[index].topicId}/messages`;
+            const urlTopicManger = `${this.baseUrl}/api/v1/topics/${topicMessages[index].topicId}/messages`;
             // eslint-disable-next-line no-await-in-loop
             const mainTopicMessages = await this.sendGetRequest(urlTopicManger);
             const filteredData = mainTopicMessages.data.messages.filter((x) => {
-                const currMsgInfo = JSON.parse(Buffer.from(x.message, 'base64').toString());
+                const currMsgInfo = JSON.parse(Buffer.from(x.message, `base64`).toString());
                 return userNftLists.some((y) => currMsgInfo.nftId === `${y.token_id}:${y.serial_number}`);
             });
             nftDataMessages.push(...filteredData);
@@ -94,7 +94,7 @@ class MirrorNode {
                 // eslint-disable-next-line no-await-in-loop
                 const nextCall = await this.nextApiCallTopics(mainTopicMessages.data.links.next);
                 const nextData = nextCall.filter((x) => {
-                    const currMsgInfo = JSON.parse(Buffer.from(x.message, 'base64').toString());
+                    const currMsgInfo = JSON.parse(Buffer.from(x.message, `base64`).toString());
                     return userNftLists.some((y) => currMsgInfo.nftId === `${y.token_id}:${y.serial_number}`);
                 });
                 nftDataMessages.push(...nextData);
@@ -107,11 +107,11 @@ class MirrorNode {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async getNftInfoTopicMessage(topicMessages, nftInfo) {
         let nftDataMessage;
-        const urlTopicManger = `${this.getBaseUrl()}/api/v1/topics/${topicMessages}/messages`;
+        const urlTopicManger = `${this.baseUrl}/api/v1/topics/${topicMessages}/messages`;
         // eslint-disable-next-line no-await-in-loop
         const mainTopicMessages = await this.sendGetRequest(urlTopicManger);
         const filteredData = mainTopicMessages.data.messages.filter((x) => {
-            const currMsgInfo = JSON.parse(Buffer.from(x.message, 'base64').toString());
+            const currMsgInfo = JSON.parse(Buffer.from(x.message, `base64`).toString());
             return currMsgInfo.nftId === `${nftInfo.token_id}:${nftInfo.serial_number}`;
         });
         nftDataMessage = filteredData;
@@ -119,7 +119,7 @@ class MirrorNode {
             // eslint-disable-next-line no-await-in-loop
             const nextCall = await this.nextApiCallTopics(mainTopicMessages.data.links.next);
             const nextData = nextCall.filter((x) => {
-                const currMsgInfo = JSON.parse(Buffer.from(x.message, 'base64').toString());
+                const currMsgInfo = JSON.parse(Buffer.from(x.message, `base64`).toString());
                 return currMsgInfo.nftId === `${nftInfo.token_id}:${nftInfo.serial_number}`;
             });
             nftDataMessage = nextData;
@@ -130,7 +130,7 @@ class MirrorNode {
     async getAllUserHNSNfts(topicMessages, accountId) {
         const nftList = [];
         for (let index = 0; index < topicMessages.length; index += 1) {
-            const nftEndpoint = `${this.getBaseUrl()}/api/v1/tokens/${topicMessages[index].tokenId}/nfts?account.id=${accountId}`;
+            const nftEndpoint = `${this.baseUrl}/api/v1/tokens/${topicMessages[index].tokenId}/nfts?account.id=${accountId}`;
             // eslint-disable-next-line no-await-in-loop
             const nftData = await this.sendGetRequest(nftEndpoint);
             nftList.push(...nftData.data.nfts);
@@ -143,13 +143,15 @@ class MirrorNode {
         return nftList;
     }
     async getTldTopicMessage() {
-        const urlTopicManger = `${this.getBaseUrl()}/api/v1/topics/${_1.MAIN_TLD_TOPIC_ID}/messages`;
+        const urlTopicManger = `${this.baseUrl}/api/v1/topics/${_1.MAIN_TLD_TOPIC_ID}/messages`;
         const res = await this.sendGetRequest(urlTopicManger);
         const { messages } = res.data;
-        const topicMessages = messages.map((x) => {
-            const decoded = Buffer.from(x.message, 'base64').toString();
+        const topicMessages = messages
+            .map((x) => {
+            const decoded = Buffer.from(x.message, `base64`).toString();
             return JSON.parse(decoded);
-        }).filter((x) => DOMAINS.find((y) => y === x.nameHash.domain));
+        })
+            .filter((x) => DOMAINS.find((y) => y === x.nameHash.domain));
         return topicMessages;
     }
     // Private
@@ -166,15 +168,17 @@ class MirrorNode {
     async sendGetRequest(url) {
         const AUTH_HEADERS = this.buildAuthHeaders(this.authHeader, this.authKey);
         try {
-            const res = this.networkType === 'arkhia_main' ? await axios_1.default.get(url, { headers: { ...AUTH_HEADERS } }) : await axios_1.default.get(url);
+            const res = this.networkType === `arkhia_main`
+                ? await axios_1.default.get(url, { headers: { ...AUTH_HEADERS } })
+                : await axios_1.default.get(url);
             return res;
         }
         catch (err) {
-            throw new Error('Get Request Failed');
+            throw new Error(`Get Request Failed`);
         }
     }
     async nextApiCall(url) {
-        const nextUrl = `${this.getBaseUrl()}${url}`;
+        const nextUrl = `${this.baseUrl}${url}`;
         const nextData = await this.sendGetRequest(nextUrl);
         if (nextData.data.links.next !== null) {
             return nextData.data.concat(await this.nextApiCall(nextData.data.links.next));
@@ -182,7 +186,7 @@ class MirrorNode {
         return nextData.data;
     }
     async nextApiCallTopics(url) {
-        const nextUrl = `${this.getBaseUrl()}${url}`;
+        const nextUrl = `${this.baseUrl}${url}`;
         const nextData = await this.sendGetRequest(nextUrl);
         if (nextData.data.links.next !== null) {
             return nextData.data.messages.concat(await this.nextApiCallTopics(nextData.data.links.next));
