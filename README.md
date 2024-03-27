@@ -1,3 +1,6 @@
+> [!CAUTION]
+> This version of the SDK has been deprecated. Please find the latest version of the SDK [here](https://github.com/hedera-name-service/hns-resolution-sdk).
+
 # HNS resolution SDK
 
 The HNS namespace currently includes `.hbar`, `.boo`, and `.cream` TLDs, which are native to HNS. Since the namespace will expand over time, a hardcoded list of TLDs for recognizing HNS names will regularly be out-of-date. The HNS Resolution SDK ensures a correct resolution of account holders and their domains.
